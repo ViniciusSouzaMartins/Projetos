@@ -1,0 +1,442 @@
+#include<stdio.h>
+#include<conio.c>
+#include<stdlib.h>
+#include<string.h>
+#include<ctype.h>
+#include<windows.h>
+
+struct TpJogo
+{
+	int CodJogo;
+	char DescJogo[300];
+};typedef struct TpJogo Jogos;
+
+struct TpCarta
+{
+	int CodCarta, CodJogo, CodDeck;
+	char DescCarta[300], NomeCarta[100];
+	
+};typedef struct TpCarta Cartas;
+
+struct TpDeck
+{
+	int CodDeck, Ano, CodJogo;
+	char Titulo[300], Jogador[100], NomeJogo[300];
+	
+};typedef struct TpDeck Decks;
+
+int BuscaJogo(FILE *PtrBuscaJogo, int Codigo)
+{
+	Jogos CadJogo;
+	rewind(PtrBuscaJogo);
+	fread(&CadJogo, sizeof(Jogos), 1, PtrBuscaJogo);
+	while(!feof(PtrBuscaJogo) && CadJogo.CodJogo != Codigo)
+		fread(&CadJogo, sizeof(Jogos), 1, PtrBuscaJogo);
+		
+	if(!feof(PtrBuscaJogo))
+		return ftell(PtrBuscaJogo) - sizeof(Jogos);
+	else 
+		return -1;	
+}
+int BuscaCarta(FILE *PtrBuscaCarta, int Cod)
+{
+	Cartas CadCarta;
+	rewind(PtrBuscaCarta);	
+	fread(&CadCarta, sizeof(Cartas), 1, PtrBuscaCarta);
+	while(!feof(PtrBuscaCarta) && CadCarta.CodCarta != Cod)
+		fread(&CadCarta, sizeof(Cartas), 1, PtrBuscaCarta);	
+		
+	if(!feof(PtrBuscaCarta))
+		return ftell(PtrBuscaCarta) - sizeof(Cartas);
+	else 
+		return -1;	
+}
+int BuscaDeck(FILE *PtrBuscaDeck, int Cod)
+{
+	Decks CadDeck;
+	rewind(PtrBuscaDeck);	
+	fread(&CadDeck, sizeof(Decks), 1, PtrBuscaDeck);
+	while(!feof(PtrBuscaDeck) && CadDeck.CodDeck != Cod)
+		fread(&CadDeck, sizeof(Decks), 1, PtrBuscaDeck);	
+		
+	if(!feof(PtrBuscaDeck))
+		return ftell(PtrBuscaDeck) - sizeof(Decks);
+	else 
+		return -1;	
+}
+int Verif(FILE *PtrBuscaDeck, int CodJogo, int CodDeck, int pos)
+{
+	Decks CadDeck;
+	fseek(PtrBuscaDeck, pos, 0);
+	fread(&CadDeck, sizeof(Decks), 1, PtrBuscaDeck);
+	if(CadDeck.CodDeck == CodDeck && CadDeck.CodJogo == CodJogo)
+		return 1;
+	else
+		return 0;
+}
+int VerifC(FILE *PtrBuscaCarta, int pos, int CodJogo, int CodDeck)
+{
+	Cartas CadCarta;
+	fseek(PtrBuscaCarta, pos, 0);
+	fread(&CadCarta, sizeof(Cartas), 1, PtrBuscaCarta);
+	if(CadCarta.CodDeck == 0 && CadCarta.CodJogo == CodJogo)
+		return 0;
+	if(CadCarta.CodJogo != CodJogo && pos != -1)
+		return 1;
+	if(CadCarta.CodDeck > 0 && CadCarta.CodDeck != CodDeck)
+		return 2;
+	if(CadCarta.CodDeck == CodDeck)
+		return 3;
+}
+
+
+void CadastroJogos(char Jogo[100])
+{
+	int Codigo;
+	system("cls");
+	FILE *PtrCadJogo = fopen(Jogo, "ab+");
+	Jogos CadJogo;
+	printf("\t####CADASTRO DE JOGOS####");
+	printf("\nDigite o Codigo do Jogo(-1 - SAIR): ");
+	scanf("%d", &CadJogo.CodJogo);
+	while(CadJogo.CodJogo != -1)
+	{
+		if(BuscaJogo(PtrCadJogo, CadJogo.CodJogo) == -1 && CadJogo.CodJogo > 0)
+		{
+			printf("\nDigite o nome do Jogo: ");
+			fflush(stdin);
+			gets(CadJogo.DescJogo);
+			
+			fwrite(&CadJogo, sizeof(Jogos), 1, PtrCadJogo);	
+			printf("\nJOGO CADASTRADO!\n");		
+		}
+		else
+		{		
+			system("cls");			
+			if(CadJogo.CodJogo == 0)
+			{				
+				printf("\nO Codigo do jogo deve ser maior que zero!");						
+			}
+			else
+			{				
+				printf("\nO jogo com codigo %d ja existe!", CadJogo.CodJogo);					
+			}
+		}
+		getch();
+		system("cls");
+		printf("\t####CADASTRO DE JOGOS####");
+		printf("\nDigite o Codigo do Jogo(-1 - SAIR): ");
+		scanf("%d", &CadJogo.CodJogo);		
+	}
+	fclose(PtrCadJogo);
+}
+void CadastroCartas(char Carta[100], char Jogo[100])
+{
+	FILE *PtrCadCarta = fopen(Carta, "ab+");
+	FILE *PtrCadJogo = fopen(Jogo, "rb");
+	Cartas CadCarta;
+	Jogos CadJogo;
+	system("cls");
+	printf("\t####CADASTRO DE CARTAS####");
+	printf("\nDigite o codigo de um jogo existente(-1 - SAIR): ");
+	scanf("%d", &CadJogo.CodJogo);
+	while(CadJogo.CodJogo != -1)
+	{
+		if(CadJogo.CodJogo == 0)
+		{
+			printf("\nO codigo do jogo deve ser maior que zero!");
+		}
+		else
+		{
+			if(BuscaJogo(PtrCadJogo, CadJogo.CodJogo) == -1 && CadJogo.CodJogo > 0)
+			{
+				printf("\n O jogo com codigo %d nao existe!", CadJogo.CodJogo);
+			}
+			else
+			{
+				printf("\nDigite o codigo da carta(-1 - SAIR): ");				
+				scanf("%d", &CadCarta.CodCarta);
+				
+				while(CadCarta.CodCarta != -1)
+				{					
+					if(BuscaCarta(PtrCadCarta, CadCarta.CodCarta) == -1 && CadCarta.CodCarta > 0)
+					{
+						CadCarta.CodJogo = CadJogo.CodJogo;
+						CadCarta.CodDeck = 0;
+						printf("\nDigite o nome da carta: ");
+						fflush(stdin);
+						gets(CadCarta.NomeCarta);
+						fflush(stdin);
+						printf("\nDescricao: ");
+						gets(CadCarta.DescCarta);
+						
+						fwrite(&CadCarta, sizeof(Cartas),1,PtrCadCarta);
+						printf("\nCarta cadastrada!\n");
+					}
+					else
+						if(CadCarta.CodCarta == 0)
+						{
+							printf("\nO codigo da carta deve ser maior que zero!\n");
+						}
+						else
+							if(BuscaCarta(PtrCadCarta, CadCarta.CodCarta) != -1)
+							{							
+								printf("\nA carta com codigo %d ja existe!\n", CadCarta.CodCarta);							
+							}										
+				
+					printf("Digite o codigo da carta(-1 - SAIR): ");					
+					scanf("%d", &CadCarta.CodCarta);					
+				}
+			}
+		}
+		printf("\nDigite o codigo do jogo(-1 - SAIR): ");
+		scanf("%d", &CadJogo.CodJogo);		
+	}
+	fclose(PtrCadJogo);
+	fclose(PtrCadCarta);	
+}
+void CadastroDecks(char Deck[100], char Jogo[100])
+{
+	int pos;
+	FILE *PtrCadDeck = fopen(Deck, "ab+");
+	FILE *PtrCadJogo = fopen(Jogo, "rb");
+	Decks CadDeck;
+	Jogos CadJogo;
+	printf("\t####CADASTRO DE DECKS####");
+	printf("\n\nDigite o codigo do jogo(-1 - SAIR): ");
+	scanf("%d", &CadJogo.CodJogo);
+	while(CadJogo.CodJogo !=-1)
+	{
+		if(CadJogo.CodJogo == 0)
+			printf("\nO codigo do jogo deve ser maior que zero!\n");
+		else
+		{
+			if(BuscaJogo(PtrCadJogo, CadJogo.CodJogo) == -1)
+				printf("\nO jogo com codigo %d nao existe!\n", CadJogo.CodJogo);
+			else
+			{
+				system("cls");
+				printf("Digite o codigo do deck(-1 - SAIR): ");
+				scanf("%d", &CadDeck.CodDeck);
+				while(CadDeck.CodDeck != -1)
+				{
+					if(CadDeck.CodDeck == 0)
+						printf("O codigo do deck deve ser maior que zero!\n");
+					else
+						if(BuscaDeck(PtrCadDeck, CadDeck.CodDeck) == -1)
+						{
+							pos = BuscaJogo(PtrCadJogo, CadJogo.CodJogo);
+							CadDeck.CodJogo = CadJogo.CodJogo;
+							printf("\nDigite o nome do deck: ");
+							fflush(stdin);
+							gets(CadDeck.Titulo);
+							printf("\nJogador Responsavel: ");
+							fflush(stdin);
+							gets(CadDeck.Jogador);
+							printf("\nAno de criacao: ");
+							fflush(stdin);
+							scanf("%d", &CadDeck.Ano);
+							strcpy(CadDeck.NomeJogo, CadJogo.DescJogo);
+							fwrite(&CadDeck, sizeof(Decks), 1, PtrCadDeck);
+							printf("\n\n DECK CADASTRADO!\n\n");
+						}
+						else
+							if(BuscaDeck(PtrCadDeck, CadDeck.CodDeck) != -1)
+								printf("\nO deck com codigo %d ja existe!", CadDeck.CodDeck);
+					printf("\nDigite o codigo do deck(-1 - SAIR): ");
+					scanf("%d", &CadDeck.CodDeck);				
+				}
+				
+			}
+		}
+		printf("\t\n####CADASTRO DE DECKS####\n");
+		printf("\nDigite o codigo do jogo(-1 - SAIR): ");
+		scanf("%d", &CadJogo.CodJogo);
+	}
+	
+	fclose(PtrCadDeck);
+	fclose(PtrCadJogo);
+}
+void CadastroCartaInDeck(char Jogo[100], char Deck[100], char Carta[100])
+{
+	FILE *PtrCadJogo = fopen(Jogo, "rb");
+	FILE *PtrCadDeck = fopen(Deck, "rb+");
+	FILE *PtrCadCarta = fopen(Carta, "rb+");
+	Jogos CadJogo;
+	Decks CadDeck;
+	Cartas CadCarta;
+	int pos;
+	printf("\t####CADASTRO DE CARTAS EM DECKS####");
+	printf("\nDigite o codigo do jogo(-1 - SAIR): ");
+	scanf("%d", &CadJogo.CodJogo);
+	while(CadJogo.CodJogo != -1)
+	{
+		if(CadJogo.CodJogo == 0)
+			printf("\nO codigo do jogo deve ser maior que zero!\n");
+		else
+		{
+			if(BuscaJogo(PtrCadJogo, CadJogo.CodJogo) == -1)
+				printf("\nO jogo com %d nao existe!\n", CadJogo.CodJogo);
+			else
+			{
+				printf("\nDigite o codigo do deck(-1 - SAIR): ");
+				scanf("%d", &CadDeck.CodDeck);
+				while(CadDeck.CodDeck != -1)
+				{
+					if(CadDeck.CodDeck == 0)
+						printf("\nO codigo do deck deve ser maior que zero!\n");
+					else
+						pos = BuscaDeck(PtrCadDeck, CadDeck.CodDeck);
+						if(Verif(PtrCadDeck, CadJogo.CodJogo, CadDeck.CodDeck, pos) == 1)
+						{
+							printf("\nDigite o codigo da carta(-1 - SAIR): ");
+							scanf("%d", &CadCarta.CodCarta);
+							while(CadCarta.CodCarta != -1)
+							{
+								if(CadCarta.CodCarta == 0)
+									printf("\nO codigo da carta deve ser maior que zero!\n");
+								else
+								{
+									pos = BuscaCarta(PtrCadCarta, CadCarta.CodCarta);
+									if(VerifC(PtrCadCarta, pos, CadJogo.CodJogo, CadDeck.CodDeck) == 0 && pos != -1)
+									{
+										fseek(PtrCadCarta, pos, 0);
+										fread(&CadCarta, sizeof(Cartas), 1, PtrCadCarta);
+										CadCarta.CodDeck = CadDeck.CodDeck;									
+										printf("\nNome da carta: %s", CadCarta.NomeCarta);
+										fwrite(&CadCarta, sizeof(Cartas),1, PtrCadCarta);
+										printf("\n\nCARTA CADASTRADA!\n\n");																				
+									}
+									else
+										if(VerifC(PtrCadCarta, pos, CadJogo.CodJogo, CadDeck.CodDeck) == 1)
+											printf("\nA carta com codigo %d nao pertence a esse jogo!\n", CadCarta.CodCarta);
+										if(VerifC(PtrCadCarta, pos, CadJogo.CodJogo, CadDeck.CodDeck) == 2)
+											printf("\nA carta com codigo %d pertence a outro deck!\n", CadCarta.CodCarta);
+										if(VerifC(PtrCadCarta, pos, CadJogo.CodJogo, CadDeck.CodDeck) == 3)
+											printf("\nA carta com codigo %d ja pertence a esse deck!\n", CadCarta.CodCarta);
+										else
+											if(BuscaCarta(PtrCadCarta, CadCarta.CodCarta) == -1)
+											{
+												fseek(PtrCadCarta, 0, 2);
+												fread(&CadCarta, sizeof(Cartas), 1, PtrCadCarta);
+												CadCarta.CodJogo = CadJogo.CodJogo;
+												CadCarta.CodDeck = CadDeck.CodDeck;
+												printf("\nDigite o nome da carta: ");
+												fflush(stdin);
+												gets(CadCarta.NomeCarta);
+												printf("\nDigite a descricao da carta: ");
+												fflush(stdin);
+												gets(CadCarta.DescCarta);
+												fwrite(&CadCarta, sizeof(Cartas), 1, PtrCadCarta);
+												printf("\nCARTA CADASTRADA!\n");										
+											}
+									
+								}
+								printf("\nDigite o codigo da carta: ");
+								scanf("%d", &CadCarta.CodCarta);
+							}							
+						}
+						else
+							if(Verif(PtrCadDeck, CadJogo.CodJogo, CadDeck.CodDeck, pos) == 0 && BuscaDeck (PtrCadDeck, CadDeck.CodDeck) != -1)
+								printf("\nO deck com codigo %d esta vinculado a outro jogo!\n");
+							else
+								printf("\nO Deck com codigo %d nao existe!", CadDeck.CodDeck);
+								
+					printf("\nDigite o codigo do deck(-1 - SAIR): ");
+					scanf("%d", &CadDeck.CodDeck);
+				}					
+			}
+		}
+		printf("\t\n####CADASTRO DE CARTA(S) EM DECK(S)####");
+		printf("\nDigite o codigo do jogo(-1 - SAIR): ");
+		scanf("%d", &CadJogo.CodJogo);	
+	}
+	
+	
+	
+	
+	
+	fclose(PtrCadCarta);
+	fclose(PtrCadJogo);
+	fclose(PtrCadDeck);	
+}
+
+char Menu()
+{
+	system("cls");
+	printf("####Menu####");
+	printf("\n\n[A] - Cadastro de Jogos\n");
+	printf("\n[B] - Cadastro de Cartas\n");
+	printf("\n[C] - Cadastro de Decks\n");
+	printf("\n[D] - Cadastro de Carta(s) no Deck(s)\n");
+	return getch();
+}
+
+void Executar(void)
+{
+	char op;	
+	do
+	{
+		op = toupper(Menu());
+		
+		switch(op)
+		{
+			case 'A': CadastroJogos("Jogos.dat");
+					  break;
+			case 'B': CadastroCartas("Cartas.dat","Jogos.dat");
+					  break;
+			case 'C': CadastroDecks("Decks.dat", "Jogos.dat");
+					  break;
+			case 'D': CadastroCartaInDeck("Jogos.dat", "Decks.dat", "Cartas.dat");
+					  break;		
+		}
+	}while(op!=27);
+}
+
+
+int main()
+{	
+	FILE *PtrJogo = fopen("Jogos.dat","rb");
+	FILE *PtrCarta = fopen("Cartas.dat","rb");
+	FILE *PtrDeck = fopen("Decks.dat","rb");
+	if(PtrJogo ==  NULL)
+	{
+		printf("\nArquivo nao existe!\n");
+		printf("\nDeseja cria-lo?(S/N)\n");
+		if(toupper(getch()) == 'S')
+		{
+			printf("\nCriando Arquivo...\n");
+			Sleep(1000);
+			PtrJogo = fopen("Jogos.dat","wb");
+			printf("\nArquivo Criado!\n");
+		}		
+	}	
+	if(PtrCarta ==  NULL)
+	{
+		printf("\nArquivo nao existe!\n");
+		printf("\nDeseja cria-lo?(S/N)\n");
+		if(toupper(getch()) == 'S')
+		{
+			printf("\nCriando Arquivo...\n");
+			Sleep(1000);
+			PtrJogo = fopen("Cartas.dat","wb");
+			printf("\nArquivo Criado!\n");
+		}		
+	}	
+	if(PtrDeck ==  NULL)
+	{
+		printf("\nArquivo nao existe!\n");
+		printf("\nDeseja cria-lo?(S/N)\n");
+		if(toupper(getch()) == 'S')
+		{
+			printf("\nCriando Arquivo...\n");
+			Sleep(1000);
+			PtrJogo = fopen("Decks.dat","wb");
+			printf("\nArquivo Criado!\n");
+		}		
+	}
+	fclose(PtrDeck);
+	fclose(PtrCarta);
+	fclose(PtrJogo);	
+	Executar();
+}

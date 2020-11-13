@@ -5,7 +5,6 @@
 #include<ctype.h>
 #include<windows.h>
 
-//kk
 struct TpJogo
 {
 	int CodJogo;

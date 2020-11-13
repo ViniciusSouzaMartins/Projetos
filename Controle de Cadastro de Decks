@@ -5,9 +5,6 @@
 #include<ctype.h>
 #include<windows.h>
 
-
-//Souzinha vai assistir a aula 
-
 struct TpJogo
 {
 	int CodJogo;
